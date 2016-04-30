@@ -4,22 +4,22 @@
 #
 
 # name of the target (without file extension)
-target = ''
+#target = ''
 
 # name of the makefile
-makeFileName = 'makefile'
+#makeFileName = 'makefile'
 
 # some compiler flags that should be used
-compilerFlags = []
+#compilerFlags = []
 
 # some link flags that should be used
-linkFlags = []
+#linkFlags = []
 
 # Array of strings. Holds formatted target and rule entries of the makefile
 entries = []
 
 # List of allowed fortran file extension
-fortranFileExtensions = ['.f03', '.f95', '.f90']
+fortranFileExtensions = ['.f08', '.f03', '.f95', '.f90']
 
 # The fortran file extension that will actually be used
 fortranFileExtension = ''
@@ -53,16 +53,33 @@ def getDependencies(filename):
     global fortranFileExtension
 
     # open a fortran file
-    f = open(filename, 'r')
+    try:
+        f = open(filename, 'r')
+    except IOError as e:
+        print 'skipped file: '+filename+' (external library?)'
+        return []
 
     newDependencies = []
 
     # get dependencies in this file
     for line in f.readlines():
 
-            pos = line.find('use ')
-            if pos > -1:
-                dependency = line[pos+4:].strip()
+            line = line.strip("\t").strip()
+
+            if line[0:1] == "!":
+                continue
+
+            pos = line.strip().find('use ')
+
+            if -1 < pos < 9:
+                # Look for an "only" statement after a comma
+                only = line.strip().find(',')
+
+                if only > -1:
+                    dependency = line[pos+4:only].strip()
+                else:
+                    dependency = line[pos+4:].strip()
+
                 newDependencies.append(dependency)
 
     # look for subdependencies
@@ -94,7 +111,7 @@ def createEntryForLinkFile(target, dependencies = []):
         s += dependency + '.o '
 
     # rule:
-    s += '\n\tgfortran -c ' + ' '.join(compilerFlags) + ' ' + target + '.f03\n\n'
+    s += '\n\tgfortran -c ' + ' '.join(compilerFlags) + ' ' + target + fortranFileExtension+'\n\n'
 
     return s
 
@@ -168,4 +185,24 @@ def createMakeFile():
     f.write(fileContent)
     f.close()
 
+    print '\n\tcreated file: '+makeFileName
 
+target = input('Please enter a target file: ')
+makeFileName = raw_input('Please enter a makefilename (default: makefile): ')
+
+if makeFileName == '':
+    makeFileName = 'makefile'
+
+cFlags = raw_input('Additional compiler flags: ')
+if cFlags != '':
+    compilerFlags = cFlags.split(' ')
+else:
+    compilerFlags = []
+
+lFlags = raw_input('Additional link flags: ')
+if lFlags != '':
+    linkFlags = cFlags.split(' ')
+else:
+    linkFlags = []
+
+createMakeFile()
