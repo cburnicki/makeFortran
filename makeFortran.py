@@ -3,6 +3,9 @@
 # You may also set an array of compilerFlags resp. linkFlags
 #
 
+# the current work directory
+cwd = ''
+
 # name of the target (without file extension)
 #target = ''
 
@@ -188,6 +191,7 @@ def createMakeFile():
     print '\n\tcreated file: '+makeFileName
 
 target = input('Please enter a target file: ')
+target = cwd + target
 makeFileName = raw_input('Please enter a makefilename (default: makefile): ')
 
 if makeFileName == '':
